@@ -1,19 +1,24 @@
 import copy
+# Couleurs ANSI pour la sortie du terminal
 RED = "\033[31m"
 BLUE = "\033[34m"
 RESET = "\033[0m"
 
+# Classe représentant un seul morpion (tic-tac-toe)
 class Morpion:
     def __init__(self):
+        # Initialise une grille de morpion vide
         self.grille = [['.' for _ in range(3)] for _ in range(3)]
 
     def jouer(self, x, y, joueur_actuel):
+        # Effectue un coup si la cellule est vide et retourner True, sinon retourner False
         if self.grille[x][y] == '.':
             self.grille[x][y] = joueur_actuel
             return True
         return False
 
     def gagnant(self):
+        # Vérifie si un joueur a gagné dans ce morpion et retourne le symbole du joueur gagnant, sinon retourne None
         for i in range(3):
             if self.grille[i][0] == self.grille[i][1] == self.grille[i][2] != '.':
                 return self.grille[i][0]
@@ -26,10 +31,11 @@ class Morpion:
         return None
 
     def __str__(self):
+        # Représentation sous forme de chaîne de caractères pour l'affichage
         return "\n".join(" ".join(row) for row in self.grille)
 
-    # Add this method to the Morpion class
     def coups_disponibles(self):
+        # Renvoie la liste des cellules vides (coups disponibles) sous forme de tuples (x, y)
         coups = []
         for x in range(3):
             for y in range(3):
@@ -38,6 +44,7 @@ class Morpion:
         return coups
     
     def complet(self):
+        # Retourne True si le morpion est complet (aucune cellule vide), sinon retourne False
         for x in range(3):
             for y in range(3):
                 if self.grille[x][y] == '.':
@@ -45,39 +52,34 @@ class Morpion:
         return True
 
 
-
+# Classe représentant tout le morpion (tic-tac-toe)
 class UltimateTicTacToe:
     def __init__(self):
         self.plateau = [[Morpion() for _ in range(3)] for _ in range(3)]
         self.position_dernier_coup = None
         self.joueur_actuel = 'X'
 
-    def jouer(self, x, y):
-        if self.position_dernier_coup is None:
-            morpion_x, morpion_y = 1, 1
+    def jouer(self, morpion_x, morpion_y, x, y):
+        # Effectue un coup dans un morpion particulier en fonction des coordonnées morpion_x, morpion_y et x, y
+        # Retourne True si le coup a été joué avec succès, sinon retourne False
+        if self.position_dernier_coup is None or self.plateau[morpion_x][morpion_y].gagnant() is not None or self.plateau[morpion_x][morpion_y].complet():
+            morpion = self.plateau[morpion_x][morpion_y]
+            if morpion.jouer(x, y, self.joueur_actuel):
+                self.joueur_actuel = 'O' if self.joueur_actuel == 'X' else 'X'
+                self.position_dernier_coup = (x, y)
+                return True
         else:
-            morpion_x, morpion_y = self.position_dernier_coup
-
-        morpion = self.plateau[morpion_x][morpion_y]
-        if morpion.gagnant() is not None or morpion.complet():
-            for i in range(3):
-                for j in range(3):
-                    morpion = self.plateau[i][j]
-                    if morpion.jouer(x, y, self.joueur_actuel):
-                        self.joueur_actuel = 'O' if self.joueur_actuel == 'X' else 'X'
-                        self.position_dernier_coup = (x, y)
-                        return True
-        else:
+            morpion = self.plateau[morpion_x][morpion_y]
             if morpion.jouer(x, y, self.joueur_actuel):
                 self.joueur_actuel = 'O' if self.joueur_actuel == 'X' else 'X'
                 self.position_dernier_coup = (x, y)
                 return True
         return False
 
-
     # Le reste du code reste inchangé
 
     def gagnant(self):
+        # Vérifie si un joueur a gagné l'Ultimate Tic Tac Toe et retourne le symbole du joueur gagnant, sinon retourne None
         morpions_gagnants = [[morpion.gagnant() for morpion in row] for row in self.plateau]
 
         for i in range(3):
@@ -92,6 +94,7 @@ class UltimateTicTacToe:
         return None
 
     def __str__(self):
+        # Représentation sous forme de chaîne de caractères pour l'affichage
         rows = []
         for i in range(3):
             for j in range(3):
@@ -103,6 +106,8 @@ class UltimateTicTacToe:
 
 
     def match_nul(self):
+        # Vérifie si le match est nul, c'est-à-dire si tous les morpions sont terminés sans gagnant
+        # Retourne True si c'est un match nul, sinon retourne False
         for row in self.plateau:
             for morpion in row:
                 if morpion.gagnant() is None:
@@ -110,12 +115,15 @@ class UltimateTicTacToe:
         return True
 
     def coups_disponibles(self):
+        # Retourne une liste des coups disponibles dans le morpion actuel
+        # Chaque coup est représenté par un tuple (x, y) correspondant à la position de la case vide
         coups = []
         for x in range(3):
             for y in range(3):
                 if self.grille[x][y] == '.':
                     coups.append((x, y))
         return coups
+
 
 class MinMaxIA:
     def __init__(self, profondeur_max):
@@ -178,7 +186,12 @@ class MinMaxIA:
             morpion_x, morpion_y = ultimate_tic_tac_toe.position_dernier_coup
 
         morpion = ultimate_tic_tac_toe.plateau[morpion_x][morpion_y]
-        return morpion.coups_disponibles()
+        coups_morpion = morpion.coups_disponibles()
+
+        # Ajouter les coordonnées du morpion aux coups possibles
+        coups_complets = [(morpion_x, morpion_y, x, y) for x, y in coups_morpion]
+        return coups_complets
+
 
 
 def main():
@@ -196,35 +209,42 @@ def main():
         color = RED if ultimate_tic_tac_toe.joueur_actuel == "X" else BLUE
         print(color + str(ultimate_tic_tac_toe) + RESET)
 
-        if ultimate_tic_tac_toe.position_dernier_coup is not None:
-            morpion_x, morpion_y = ultimate_tic_tac_toe.position_dernier_coup
-            print(f"{color}Vous êtes dans la case de Morpion ({morpion_x}, {morpion_y}).{RESET}")
+        libre_de_choisir_grande_case = ultimate_tic_tac_toe.position_dernier_coup is None or ultimate_tic_tac_toe.plateau[ultimate_tic_tac_toe.position_dernier_coup[0]][ultimate_tic_tac_toe.position_dernier_coup[1]].gagnant() is not None or ultimate_tic_tac_toe.plateau[ultimate_tic_tac_toe.position_dernier_coup[0]][ultimate_tic_tac_toe.position_dernier_coup[1]].complet()
+
+        if libre_de_choisir_grande_case:
+            print(f"{color}Vous pouvez choisir une grande case.{RESET}")
+        else:
+            print(f"{color}Vous devez jouer dans la grande case ({ultimate_tic_tac_toe.position_dernier_coup[0]}, {ultimate_tic_tac_toe.position_dernier_coup[1]}).{RESET}")
 
         if (choix == 1 and ultimate_tic_tac_toe.joueur_actuel == 'X') or (choix == 2 and ultimate_tic_tac_toe.joueur_actuel == 'O'):
             while True:
                 try:
-                    x, y = map(int, input(f"{color}Joueur {ultimate_tic_tac_toe.joueur_actuel}, entrez les coordonnées (x, y) : {RESET}").split())
-                    if 0 <= x <= 2 and 0 <= y <= 2:
-                        if ultimate_tic_tac_toe.jouer(x, y):
+                    if libre_de_choisir_grande_case:
+                        morpion_x, morpion_y = map(int, input(f"{color}Joueur {ultimate_tic_tac_toe.joueur_actuel}, entrez les coordonnées de la grande case (Morpion x, Morpion y) : {RESET}").split())
+                    else:
+                        morpion_x, morpion_y = ultimate_tic_tac_toe.position_dernier_coup
+
+                    x, y = map(int, input(f"{color}Joueur {ultimate_tic_tac_toe.joueur_actuel}, entrez les coordonnées de la petite case (x, y) : {RESET}").split())
+
+                    if 0 <= morpion_x <= 2 and 0 <= morpion_y <= 2 and 0 <= x <= 2 and 0 <= y <= 2:
+                        if ultimate_tic_tac_toe.jouer(morpion_x, morpion_y, x, y):
                             break
                         else:
                             print("Coup invalide, veuillez réessayer.")
                     else:
-                        print("Veuillez entrer des coordonnées valides (x, y) comprises entre 0 et 2.")
+                        print("Veuillez entrer des coordonnées valides (Morpion x, Morpion y, x, y) comprises entre 0 et 2.")
                 except ValueError:
-                    print("Veuillez entrer des coordonnées valides (x, y) comprises entre 0 et 2.")
+                    print("Veuillez entrer des coordonnées valides (Morpion x, Morpion y, x, y) comprises entre 0 et 2.")
         else:
             coup_ia = ia.meilleur_coup(ultimate_tic_tac_toe, ultimate_tic_tac_toe.joueur_actuel)
-            print(f"{color}IA {ultimate_tic_tac_toe.joueur_actuel} joue : {coup_ia}{RESET}")
-            ultimate_tic_tac_toe.jouer(*coup_ia)
+            ultimate_tic_tac_toe.jouer(coup_ia[0], coup_ia[1], coup_ia[2], coup_ia[3])
+            print(f"{color}L'IA joue en ({coup_ia[0]}, {coup_ia[1]}) dans la grande case, et en ({coup_ia[2]}, {coup_ia[3]}) dans la petite case.{RESET}")
 
-    color = RED if ultimate_tic_tac_toe.gagnant() == "X" else BLUE
+    print(color + str(ultimate_tic_tac_toe) + RESET)
     if ultimate_tic_tac_toe.gagnant() is not None:
-        print(color + f"{ultimate_tic_tac_toe.gagnant()} a gagné la partie !" + RESET)
+        print(f"{color}Le joueur {ultimate_tic_tac_toe.gagnant()} gagne la partie !{RESET}")
     else:
         print("Match nul !")
 
-#blabla
-        
 if __name__ == "__main__":
     main()
